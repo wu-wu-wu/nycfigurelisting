@@ -552,7 +552,7 @@ function renderFilters() {
 }
 
 // ---------- cards ----------
-
+/*
 function fmtDateTime(dateStr, startTime) {
   if (!dateStr) return '';
   // Force the date string to exactly 10 characters (YYYY-MM-DD)
@@ -614,7 +614,104 @@ function escapeHtml(str) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
 }
+*/
 
+// Update 07-17-2026
+function fmtDateTime(dateStr, startTime) {
+  if (!dateStr) return '';
+  
+  // 1. Clean the date string: Extract just YYYY-MM-DD from Google Sheets
+  const safeDateStr = String(dateStr).slice(0, 10); 
+  
+  // 2. Extract hours/minutes, fallback to midnight if empty
+  const timeStr = startTime ? startTime.trim() : '00:00'; 
+  
+  // 3. Build a precise local ISO timestamp to prevent timezone shifting
+  const localIsoString = safeDateStr + 'T' + timeStr;
+  const d = new Date(localIsoString);
+  
+  // 4. Fallback check for corrupt rows or empty data
+  if (isNaN(d.getTime())) return '';
+
+  // 5. Format layout variables
+  const dayPart = d.toLocaleDateString('en-US', { 
+    weekday: 'short', 
+    month: 'numeric', 
+    day: 'numeric',
+    timeZone: undefined // Automatically falls back to user browser timezone
+  });
+  
+  const timePart = startTime ? d.toLocaleTimeString('en-US', { 
+    hour: 'numeric', 
+    minute: '2-digit' 
+  }) : '';
+  
+  return dayPart + (timePart ? ' · ' + timePart : '');
+}
+
+function renderCards() {
+  let filtered = allEvents.slice();
+  
+  // Normalize comparison slice to handle varied string outputs from your Sheets webhook
+  if (selectedDate) {
+    filtered = filtered.filter(function (e) { 
+      return e.eventDate && String(e.eventDate).slice(0, 10) === selectedDate; 
+    });
+  }
+  
+  if (activeFilters.price) filtered = filtered.filter(function (e) { return priceTier(e.cost) === activeFilters.price; });
+  if (activeFilters.neighborhood) filtered = filtered.filter(function (e) { return e.neighborhood === activeFilters.neighborhood; });
+  if (activeFilters.modelingType.size > 0) {
+    filtered = filtered.filter(function (e) {
+      const tags = (e.modelingType || '').split(',').map(function (t) { return t.trim(); });
+      return tags.some(function (t) { return activeFilters.modelingType.has(t); });
+    });
+  }
+
+  // Robust string comparison sort that tolerates undefined values gracefully
+  filtered.sort(function (a, b) { 
+    const keyA = (String(a.eventDate || '')).slice(0, 10) + ' ' + (a.startTime || '00:00');
+    const keyB = (String(b.eventDate || '')).slice(0, 10) + ' ' + (b.startTime || '00:00');
+    return keyA.localeCompare(keyB);
+  });
+
+  const meta = document.getElementById('results-meta');
+  meta.textContent = filtered.length + (filtered.length === 1 ? ' event' : ' events') +
+    (selectedDate ? ' on ' + selectedDate : '') +
+    (activeFilters.price || activeFilters.neighborhood ? ' matching filters' : '');
+
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = '';
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state">No events match right now — try clearing a filter.</div>';
+    return;
+  }
+
+  filtered.forEach(function (e) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML =
+      '<img src="' + (e.imageUrl || '') + '" onerror="this.style.display=\'none\'" alt="">' +
+      '<div class="card-body">' +
+        '<div class="card-date">' + fmtDateTime(e.eventDate, e.startTime) + '</div>' +
+        '<h3 class="card-title">' + escapeHtml(e.eventName) + '</h3>' +
+        '<div class="card-venue">' + escapeHtml(e.venue || '') + (e.neighborhood ? ' · ' + escapeHtml(e.neighborhood) : '') + '</div>' +
+        (e.description ? '<div class="card-desc">' + escapeHtml(e.description) + '</div>' : '') +
+        '<div class="card-actions">' +
+          '<a class="btn-ticket" href="' + (e.ticketLink || '#') + '" target="_blank" rel="noopener">Tickets</a>' +
+          '<span class="more-details">$' + escapeHtml(String(e.cost || '')) + (e.materialsIncluded === 'yes' ? ' · materials incl.' : '') + '</span>' +
+        '</div>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
 // ---------- time selects ----------
 
 function populateTimeSelects() {
