@@ -324,10 +324,11 @@
     </div>
     <div class="newsletter">
       <h2 style="font-size:1.2rem;">Never miss a listing — sign up for our weekly newsletter:</h2>
-      <form onsubmit="event.preventDefault(); alert('Newsletter signup isn\'t wired to a service yet — happy to add Mailchimp/Buttondown next.');">
-        <input type="email" placeholder="EMAIL" required>
-        <button type="submit">SIGN UP</button>
-      </form>
+         <form action="https://assets.mailerlite.com/jsonp/2515171/forms/193217653139048435/subscribe" method="post" target="_blank">
+     <input type="email" name="fields[email]" placeholder="EMAIL" autocomplete="email" required>
+     <input type="hidden" name="ml-submit" value="1">
+     <button type="submit">SIGN UP</button>
+   </form>
     </div>
   </footer>
 </div>
