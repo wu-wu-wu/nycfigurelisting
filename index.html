@@ -550,7 +550,9 @@ function renderFilters() {
 
 function fmtDateTime(dateStr, startTime) {
   if (!dateStr) return '';
-  const d = new Date(dateStr + 'T' + (startTime || '00:00'));
+  // Force the date string to exactly 10 characters (YYYY-MM-DD)
+  const safeDateStr = dateStr.slice(0, 10);
+  const d = new Date(safeDateStr + 'T' + (startTime || '00:00'));
   const dayPart = d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
   const timePart = startTime ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
   return dayPart + (timePart ? ' · ' + timePart : '');
