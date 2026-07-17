@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NYC Figure Listing — Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Custom font — Rakkas-Regular.ttf must be uploaded to the same
+     folder as this index.html when you host it (see SETUP.md). */
+  @font-face {
+    font-family: 'Rakkas';
+    src: url('./Rakkas-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-display: swap;
+  }
+  :root {
+    --cream: #F1E6D0;
+    --black: #0D0C0A;
+    --red: #E14A2E;
+    --lime: #D6E85B;
+    --lime-dark: #b9cc3e;
+    --ink: #201A14;
+    --muted: #6b6153;
+    --card-bg: #FFFDF8;
+    --border: #d9caa8;
+    --radius: 4px;
+    --font-serif: 'Rakkas', 'Georgia', serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Inter', sans-serif; background: var(--cream); color: var(--ink); }
+  h1, h2, h3 { font-family: var(--font-serif); font-weight: 400; margin: 0; }
+  a { color: inherit; }
+  button { font-family: 'Inter', sans-serif; cursor: pointer; border: none; }
+
+  /* ---- header ---- */
+  header.site {
+    background: var(--black); color: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 32px; flex-wrap: wrap; gap: 12px;
+  }
+  header.site .logo { font-family: var(--font-serif); font-size: 1.6rem; letter-spacing: -0.5px; }
+  header.site nav { display: flex; gap: 28px; font-size: 0.8rem; letter-spacing: 0.08em; font-weight: 600; }
+  header.site nav a { text-decoration: none; opacity: 0.85; }
+  header.site nav a.active { text-decoration: underline; text-underline-offset: 4px; opacity: 1; }
+  header.site nav button.linklike {
+    background: none; color: #fff; font-size: 0.8rem; letter-spacing: 0.08em; font-weight: 600;
+    opacity: 0.85; padding: 0;
+  }
+
+  /* ---- hero ---- */
+  .hero {
+    background: var(--red); padding: 56px 32px; text-align: center; overflow: hidden;
+    position: relative; display: flex; align-items: center; justify-content: center; min-height: 260px;
+  }
+  .hero h1 { font-size: clamp(3rem, 12vw, 7rem); color: var(--lime); letter-spacing: -1px; position: relative; z-index: 2; }
+  .hero-oval {
+    width: 200px; height: 260px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+    background-size: cover; background-position: center; position: relative; z-index: 1;
+  }
+  .hero-oval.left { margin-right: -60px; background: linear-gradient(160deg, #c93a20, #8f2c17); }
+  .hero-oval.right { margin-left: -60px; background: linear-gradient(160deg, #8a9e2e, #5c6b1e); filter: grayscale(0.4); }
+  .hero-oval img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  @media (max-width: 700px) { .hero-oval { display: none; } }
+
+  /* ---- layout ---- */
+  main { max-width: 1240px; margin: 0 auto; padding: 40px 32px 0; }
+  .layout { display: grid; grid-template-columns: 270px 1fr; gap: 32px; align-items: start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+  /* ---- sidebar ---- */
+  .sidebar h2 { font-size: 1.5rem; margin-bottom: 12px; }
+  .calendar { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+  .cal-head { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 10px; }
+  .cal-head button { background: none; font-size: 1rem; padding: 2px 8px; color: var(--ink); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 0.8rem; }
+  .cal-grid .dow { font-weight: 700; color: var(--muted); font-size: 0.7rem; padding-bottom: 4px; }
+  .cal-day {
+    padding: 6px 0; border-radius: 50%; position: relative; background: none; color: var(--ink); font-size: 0.8rem;
+  }
+  .cal-day.has-event { font-weight: 700; }
+  .cal-day.has-event::after {
+    content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+    width: 4px; height: 4px; border-radius: 50%; background: var(--red);
+  }
+  .cal-day.selected { background: var(--black); color: #fff; }
+  .cal-day.selected::after { background: var(--lime); }
+  .cal-day:disabled { color: transparent; cursor: default; }
+  .cal-clear { margin-top: 10px; font-size: 0.75rem; text-decoration: underline; background: none; color: var(--muted); padding: 0; }
+
+  .filters { margin-top: 24px; }
+  .filters h3 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; background: var(--black); color: #fff; padding: 8px 12px; }
+  .pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill {
+    background: var(--card-bg); border: 1px solid var(--ink); border-radius: 20px;
+    padding: 6px 14px; font-size: 0.8rem; font-weight: 500;
+  }
+  .pill.active { background: var(--black); color: #fff; border-color: var(--black); }
+
+  /* ---- cards ---- */
+  .results-meta { font-size: 0.85rem; color: var(--muted); margin-bottom: 16px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 22px; }
+  .card {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: #ddd; }
+  .card-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .card-date { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.03em; }
+  .card-title { font-size: 1.15rem; line-height: 1.25; margin: 2px 0 2px; }
+  .card-venue { font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+  .card-desc { font-size: 0.82rem; color: var(--ink); margin-bottom: 8px; line-height: 1.35; }
+  .card-actions { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .btn-ticket {
+    background: var(--lime); color: var(--black); font-weight: 700; font-size: 0.85rem;
+    padding: 9px 16px; border-radius: var(--radius); text-decoration: none; display: inline-block;
+  }
+  .btn-ticket:hover { background: var(--lime-dark); }
+  .more-details { font-size: 0.8rem; font-style: italic; text-decoration: underline; color: var(--ink); }
+  .empty-state { padding: 40px 0; text-align: center; color: var(--muted); }
+  .more-events-link { display: block; text-align: right; margin: 24px 0 8px; font-weight: 700; text-decoration: underline; }
+
+  /* ---- submit section ---- */
+  .submit-section {
+    margin-top: 64px; padding: 60px 32px; background: var(--black);
+    display: flex; justify-content: center;
+  }
+  .submit-card {
+    background: #A6A24B; max-width: 480px; width: 100%; padding: 32px; border-radius: var(--radius);
+  }
+  .submit-card h2 { color: var(--black); font-size: 1.8rem; margin-bottom: 18px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--ink); border-radius: 2px;
+    font-family: 'Inter', sans-serif; font-size: 0.9rem; background: #FBF6E8;
+  }
+  .field textarea { resize: vertical; }
+  .checkbox-group { display: flex; flex-direction: column; gap: 6px; background: #FBF6E8; border: 1px solid var(--ink); border-radius: 2px; padding: 10px 12px; }
+  .checkbox-group label { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 400; letter-spacing: normal; text-transform: none; }
+  .checkbox-group input { width: auto; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  @media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }
+  .submit-btn {
+    width: 100%; background: var(--red); color: #fff; font-weight: 700; font-size: 0.95rem;
+    padding: 14px; border-radius: var(--radius); margin-top: 8px; letter-spacing: 0.04em;
+  }
+  .submit-btn:disabled { opacity: 0.6; cursor: default; }
+  .form-msg { margin-top: 12px; font-size: 0.85rem; font-weight: 600; }
+  .form-msg.ok { color: #2c5c2c; }
+  .form-msg.err { color: var(--red); }
+
+  /* ---- footer ---- */
+  footer.site { background: var(--black); color: #fff; padding: 48px 32px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 32px; }
+  footer.site h2 { font-size: 1.6rem; margin-bottom: 14px; }
+  footer.site a { text-decoration: underline; }
+  footer.site .contact-lines { display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; }
+  footer.site .newsletter { max-width: 360px; }
+  footer.site .newsletter form { display: flex; margin-top: 12px; }
+  footer.site .newsletter input { flex: 1; padding: 10px; border: none; font-size: 0.85rem; }
+  footer.site .newsletter button { background: var(--lime); color: var(--black); font-weight: 700; padding: 0 16px; }
+
+  /* ---- admin ---- */
+  .admin-wrap { max-width: 640px; margin: 0 auto; padding: 48px 24px; }
+  .pin-box { max-width: 320px; margin: 80px auto; text-align: center; }
+  .pin-box input { width: 100%; padding: 12px; font-size: 1.2rem; text-align: center; letter-spacing: 4px; border: 1px solid var(--ink); border-radius: 4px; margin: 16px 0; }
+  /* Masks characters visually (Chrome/Safari) without using
+     type="password", which browsers treat as a credential field
+     and flag when its data is sent to a different domain than the
+     page -- see the note in SETUP.md about the Chrome warning. */
+  .pin-masked { -webkit-text-security: disc; text-security: disc; }
+  .pending-card {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px; margin-bottom: 16px; display: flex; gap: 14px;
+  }
+  .pending-card img { width: 100px; height: 100px; object-fit: cover; border-radius: 4px; background: #ddd; flex-shrink: 0; }
+  .pending-info { flex: 1; }
+  .pending-info h3 { font-size: 1.1rem; }
+  .pending-info p { margin: 2px 0; font-size: 0.85rem; color: var(--muted); }
+  .pending-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .btn-approve, .btn-reject { padding: 8px 16px; border-radius: 4px; font-weight: 700; font-size: 0.85rem; }
+  .btn-approve { background: var(--lime); color: var(--black); }
+  .btn-reject { background: #eee; color: var(--red); }
+  .banner {
+    background: #fff3cd; border: 1px solid #e0c26a; color: #6b5200; font-size: 0.85rem;
+    padding: 10px 16px; text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div id="config-banner"></div>
+
+<header class="site">
+  <div class="logo">NYC Figure Listing</div>
+  <nav>
+    <a href="#" id="nav-events" class="active">CALENDAR</a>
+    <a href="#" id="nav-submit">SUBMIT AN EVENT</a>
+    <a href="#" id="nav-contact">CONTACT</a>
+    <button class="linklike" id="nav-admin">ADMIN</button>
+  </nav>
+</header>
+
+<div id="public-view">
+  <div class="hero">
+    <div class="hero-oval left" id="hero-oval-left"></div>
+    <h1>Events</h1>
+    <div class="hero-oval right" id="hero-oval-right"></div>
+  </div>
+
+  <main>
+    <div class="layout">
+      <aside class="sidebar">
+        <h2>Calendar</h2>
+        <div class="calendar">
+          <div class="cal-head">
+            <button id="cal-prev">&lt;</button>
+            <span id="cal-label">—</span>
+            <button id="cal-next">&gt;</button>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+          <button class="cal-clear" id="cal-clear" style="display:none;">Clear date filter</button>
+        </div>
+
+        <div class="filters">
+          <h3>Filters</h3>
+          <div class="pill-group" id="filter-price"></div>
+          <div class="pill-group" id="filter-neighborhood" style="margin-top:8px;"></div>
+          <div class="pill-group" id="filter-modeling-type" style="margin-top:8px;"></div>
+        </div>
+      </aside>
+
+      <section>
+        <div class="results-meta" id="results-meta"></div>
+        <div class="card-grid" id="card-grid"></div>
+      </section>
+    </div>
+  </main>
+
+  <section class="submit-section" id="submit-section">
+    <div class="submit-card">
+      <h2>Submit an event</h2>
+      <form id="submit-form">
+        <div class="field">
+          <label>EMAIL</label>
+          <input type="email" name="email" placeholder="name@testmail.com" required>
+        </div>
+        <div class="field">
+          <label>EVENT NAME</label>
+          <input type="text" name="eventName" placeholder="figure drawing event" required>
+        </div>
+        <div class="field field-row">
+          <div>
+            <label>DATE</label>
+            <input type="date" name="eventDate" required>
+          </div>
+          <div>
+            <label>START TIME</label>
+            <select name="startTime" id="startTimeSelect" required></select>
+          </div>
+          <div>
+            <label>END TIME</label>
+            <select name="endTime" id="endTimeSelect" required></select>
+          </div>
+        </div>
+        <div class="field">
+          <label>VENUE</label>
+          <input type="text" name="venue" placeholder="The Brooklyn Loft" required>
+        </div>
+        <div class="field field-row" style="grid-template-columns: 1fr 1fr;">
+          <div>
+            <label>NEIGHBORHOOD</label>
+            <select name="neighborhood" id="neighborhood-select" required></select>
+          </div>
+          <div>
+            <label>COST ($)</label>
+            <input type="number" name="cost" placeholder="20" min="0" required>
+          </div>
+        </div>
+        <div class="field">
+          <label>MATERIALS INCLUDED?</label>
+          <select name="materialsIncluded">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>TYPE OF MODELING (select all that apply)</label>
+          <div class="checkbox-group" id="modeling-type-checkboxes"></div>
+        </div>
+        <div class="field">
+          <label>EVENT DESCRIPTION (optional)</label>
+          <textarea name="description" rows="3" placeholder="Anything else attendees should know..."></textarea>
+        </div>
+        <div class="field">
+          <label>TICKET LINK</label>
+          <input type="url" name="ticketLink" placeholder="https://youreventurl.com" required>
+        </div>
+        <div class="field">
+          <label>IMAGE URL</label>
+          <input type="url" name="imageUrl" placeholder="https://link-to-your-image.jpg">
+        </div>
+        <div class="field">
+          <label>ADD ME TO THE ARTIST / MODEL / ORGANIZER DATABASE?</label>
+          <select name="joinDatabase">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+        <button type="submit" class="submit-btn" id="submit-btn">SUBMIT</button>
+        <div class="form-msg" id="form-msg"></div>
+      </form>
+    </div>
+  </section>
+
+  <footer class="site" id="contact-section">
+    <div>
+      <h2>Contact:</h2>
+      <div class="contact-lines">
+        <a href="mailto:figurelistingnyc@gmail.com">figurelistingnyc@gmail.com</a>
+        <a href="https://www.instagram.com/nyc_figure_listing/" target="_blank" rel="noopener">Instagram</a>
+      </div>
+    </div>
+    <div class="newsletter">
+      <h2 style="font-size:1.2rem;">Never miss a listing — sign up for our weekly newsletter:</h2>
+      <form onsubmit="event.preventDefault(); alert('Newsletter signup isn\'t wired to a service yet — happy to add Mailchimp/Buttondown next.');">
+        <input type="email" placeholder="EMAIL" required>
+        <button type="submit">SIGN UP</button>
+      </form>
+    </div>
+  </footer>
+</div>
+
+<div id="admin-view" style="display:none;">
+  <header class="site">
+    <div class="logo">NYC Figure Listing — Admin</div>
+    <nav><button class="linklike" id="admin-back">BACK TO SITE</button></nav>
+  </header>
+
+  <div class="admin-wrap">
+    <div id="pin-box" class="pin-box">
+      <h2>Enter admin PIN</h2>
+      <input type="text" id="pin-input" inputmode="numeric" autocomplete="off" class="pin-masked" placeholder="••••">
+      <button class="submit-btn" id="pin-submit">Unlock</button>
+      <div class="form-msg err" id="pin-msg"></div>
+    </div>
+    <div id="pending-list" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   CONFIG — paste your deployed Apps Script Web App URL here.
+   It looks like: https://script.google.com/macros/s/AKfycb.../exec
+   ========================================================= */
+const API_URL = "https://script.google.com/macros/s/AKfycbx9MVcTHlh0_tNOe0SO291VV5Hor0p3JUagk5PJIBvd2_0b8Y2P6POjEY3zVeugn1Ic/exec";
+
+/* Optional: photos of your own models/events for the oval frames
+   flanking "Events" in the hero. Leave blank to keep the gradient
+   placeholders. Use your own photography with the subjects' consent
+   -- these are left empty deliberately rather than filled with
+   stock or web-sourced photos of real people. */
+const HERO_IMAGE_LEFT = "./HERO_IMAGE_LEFT.png";
+const HERO_IMAGE_RIGHT = "./HERO_IMAGE_RIGHT.png";
+
+const USING_DEMO_DATA = !API_URL || API_URL.indexOf("PASTE_YOUR") === 0;
+
+const DEMO_EVENTS = [
+  { id: '1', eventName: '$15 Nude Figure Drawing Session', venue: 'The Brooklyn Loft', neighborhood: 'Greenpoint', eventDate: '2025-12-07', startTime: '14:30', endTime: '16:30', cost: '15', ticketLink: '#', imageUrl: '' },
+  { id: '2', eventName: 'Anatomy Lesson', venue: 'Club Cumming', neighborhood: 'East Village', eventDate: '2025-12-07', startTime: '17:00', endTime: '19:00', cost: '20', ticketLink: '#', imageUrl: '' },
+  { id: '3', eventName: 'Figure Drawing at Enochs', venue: 'Enochs', neighborhood: 'Bushwick', eventDate: '2025-12-08', startTime: '18:30', endTime: '20:30', cost: '22', ticketLink: '#', imageUrl: '' },
+  { id: '4', eventName: 'Greenpoint Figure Drawing', venue: '67 West St #303', neighborhood: 'Greenpoint', eventDate: '2025-12-08', startTime: '19:00', endTime: '21:00', cost: '18', ticketLink: '#', imageUrl: '' },
+];
+
+// Edit this list to match the neighborhoods you actually cover.
+// Using a fixed list (instead of freeform text) means every
+// submission matches the filter pills exactly -- no "Greenpoint"
+// vs "greenpoint" vs "Green Point" mismatches.
+const NEIGHBORHOODS = [
+  'East Village', 'Greenpoint', 'Williamsburg', 'Bushwick', 'Lower East Side',
+  'Bed-Stuy', 'Park Slope', 'Astoria', 'Ridgewood', 'Other'
+];
+
+const MODELING_TYPES = [
+  'Short poses',
+  'Long poses (30+ min)',
+  'Clothed / costume',
+  'Nude',
+  'Participatory (attendee is the model)'
+];
+
+let allEvents = [];
+let selectedDate = null;      // 'YYYY-MM-DD' or null
+let activeFilters = { price: null, neighborhood: null, modelingType: new Set() };
+let calMonth = new Date().getMonth();
+let calYear = new Date().getFullYear();
+
+// ---------- boot ----------
+
+function showBanner() {
+  if (!USING_DEMO_DATA) return;
+  document.getElementById('config-banner').innerHTML =
+    '<div class="banner">Showing sample data — paste your Apps Script Web App URL into API_URL at the top of the &lt;script&gt; tag to go live.</div>';
+}
+
+async function loadEvents() {
+  if (USING_DEMO_DATA) { allEvents = DEMO_EVENTS; renderAll(); return; }
+  try {
+    const res = await fetch(API_URL + '?action=events');
+    const data = await res.json();
+    allEvents = Array.isArray(data) ? data : [];
+  } catch (err) {
+    allEvents = [];
+    document.getElementById('results-meta').textContent = 'Could not load events right now.';
+  }
+  renderAll();
+}
+
+function renderAll() {
+  const eventsByDate = groupByDate(allEvents);
+  renderCalendar(eventsByDate);
+  renderFilters();
+  renderCards();
+}
+
+// ---------- calendar ----------
+
+function groupByDate(events) {
+  const map = {};
+  events.forEach(function (e) {
+    if (!e.eventDate) return;
+    const key = e.eventDate.slice(0, 10);
+    (map[key] = map[key] || []).push(e);
+  });
+  return map;
+}
+
+function renderCalendar(eventsByDate) {
+  const label = new Date(calYear, calMonth, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  document.getElementById('cal-label').textContent = label.toUpperCase();
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+  ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(function (d) {
+    const el = document.createElement('div');
+    el.className = 'dow'; el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+  for (let i = 0; i < firstDay; i++) {
+    const filler = document.createElement('button');
+    filler.disabled = true; filler.className = 'cal-day';
+    grid.appendChild(filler);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    const btn = document.createElement('button');
+    btn.className = 'cal-day' + (eventsByDate[dateStr] ? ' has-event' : '') + (selectedDate === dateStr ? ' selected' : '');
+    btn.textContent = d;
+    btn.addEventListener('click', function () {
+      selectedDate = (selectedDate === dateStr) ? null : dateStr;
+      renderAll();
+    });
+    grid.appendChild(btn);
+  }
+
+  document.getElementById('cal-clear').style.display = selectedDate ? 'block' : 'none';
+}
+
+document.getElementById('cal-prev').addEventListener('click', function () {
+  calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderAll();
+});
+document.getElementById('cal-next').addEventListener('click', function () {
+  calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderAll();
+});
+document.getElementById('cal-clear').addEventListener('click', function () {
+  selectedDate = null; renderAll();
+});
+
+// ---------- filters ----------
+
+function priceTier(cost) {
+  const n = Number(cost);
+  if (isNaN(n)) return 'Unknown';
+  if (n < 20) return '<$20';
+  if (n <= 25) return '$20-25';
+  return '$25+';
+}
+
+function renderFilters() {
+  const priceTiers = Array.from(new Set(allEvents.map(function (e) { return priceTier(e.cost); })));
+  const neighborhoods = Array.from(new Set(allEvents.map(function (e) { return e.neighborhood; }).filter(Boolean)));
+
+  const priceEl = document.getElementById('filter-price');
+  priceEl.innerHTML = '';
+  priceTiers.forEach(function (tier) {
+    const btn = document.createElement('button');
+    btn.className = 'pill' + (activeFilters.price === tier ? ' active' : '');
+    btn.textContent = tier;
+    btn.addEventListener('click', function () {
+      activeFilters.price = (activeFilters.price === tier) ? null : tier;
+      renderAll();
+    });
+    priceEl.appendChild(btn);
+  });
+
+  const nbEl = document.getElementById('filter-neighborhood');
+  nbEl.innerHTML = '';
+  neighborhoods.forEach(function (n) {
+    const btn = document.createElement('button');
+    btn.className = 'pill' + (activeFilters.neighborhood === n ? ' active' : '');
+    btn.textContent = n;
+    btn.addEventListener('click', function () {
+      activeFilters.neighborhood = (activeFilters.neighborhood === n) ? null : n;
+      renderAll();
+    });
+    nbEl.appendChild(btn);
+  });
+
+  // Modeling type is a multi-select filter: several can be active
+  // at once, and a matching event just needs to include ANY of them.
+  const mtEl = document.getElementById('filter-modeling-type');
+  mtEl.innerHTML = '';
+  MODELING_TYPES.forEach(function (t) {
+    const btn = document.createElement('button');
+    btn.className = 'pill' + (activeFilters.modelingType.has(t) ? ' active' : '');
+    btn.textContent = t;
+    btn.addEventListener('click', function () {
+      if (activeFilters.modelingType.has(t)) activeFilters.modelingType.delete(t);
+      else activeFilters.modelingType.add(t);
+      renderAll();
+    });
+    mtEl.appendChild(btn);
+  });
+}
+
+// ---------- cards ----------
+
+function fmtDateTime(dateStr, startTime) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T' + (startTime || '00:00'));
+  const dayPart = d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
+  const timePart = startTime ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+  return dayPart + (timePart ? ' · ' + timePart : '');
+}
+
+function renderCards() {
+  let filtered = allEvents.slice();
+  if (selectedDate) filtered = filtered.filter(function (e) { return e.eventDate && e.eventDate.slice(0, 10) === selectedDate; });
+  if (activeFilters.price) filtered = filtered.filter(function (e) { return priceTier(e.cost) === activeFilters.price; });
+  if (activeFilters.neighborhood) filtered = filtered.filter(function (e) { return e.neighborhood === activeFilters.neighborhood; });
+  if (activeFilters.modelingType.size > 0) {
+    filtered = filtered.filter(function (e) {
+      const tags = (e.modelingType || '').split(',').map(function (t) { return t.trim(); });
+      return tags.some(function (t) { return activeFilters.modelingType.has(t); });
+    });
+  }
+
+  filtered.sort(function (a, b) { return (a.eventDate + a.startTime).localeCompare(b.eventDate + b.startTime); });
+
+  const meta = document.getElementById('results-meta');
+  meta.textContent = filtered.length + (filtered.length === 1 ? ' event' : ' events') +
+    (selectedDate ? ' on ' + selectedDate : '') +
+    (activeFilters.price || activeFilters.neighborhood ? ' matching filters' : '');
+
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = '';
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state">No events match right now — try clearing a filter.</div>';
+    return;
+  }
+
+  filtered.forEach(function (e) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML =
+      '<img src="' + (e.imageUrl || '') + '" onerror="this.style.display=\'none\'" alt="">' +
+      '<div class="card-body">' +
+        '<div class="card-date">' + fmtDateTime(e.eventDate, e.startTime) + '</div>' +
+        '<h3 class="card-title">' + escapeHtml(e.eventName) + '</h3>' +
+        '<div class="card-venue">' + escapeHtml(e.venue || '') + (e.neighborhood ? ' · ' + escapeHtml(e.neighborhood) : '') + '</div>' +
+        (e.description ? '<div class="card-desc">' + escapeHtml(e.description) + '</div>' : '') +
+        '<div class="card-actions">' +
+          '<a class="btn-ticket" href="' + (e.ticketLink || '#') + '" target="_blank" rel="noopener">Tickets</a>' +
+          '<span class="more-details">$' + escapeHtml(String(e.cost || '')) + (e.materialsIncluded === 'yes' ? ' · materials incl.' : '') + '</span>' +
+        '</div>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+// ---------- time selects ----------
+
+function populateTimeSelects() {
+  const opts = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      const value = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+      const hour12 = ((h % 12) === 0) ? 12 : (h % 12);
+      const ampm = h < 12 ? 'AM' : 'PM';
+      const label = hour12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+      opts.push('<option value="' + value + '">' + label + '</option>');
+    }
+  }
+  const html = '<option value="" disabled selected>Select time</option>' + opts.join('');
+  document.getElementById('startTimeSelect').innerHTML = html;
+  document.getElementById('endTimeSelect').innerHTML = html;
+}
+
+// ---------- form field population ----------
+
+function populateFormFields() {
+  const nbSelect = document.getElementById('neighborhood-select');
+  nbSelect.innerHTML = '<option value="" disabled selected>Select neighborhood</option>' +
+    NEIGHBORHOODS.map(function (n) { return '<option value="' + n + '">' + n + '</option>'; }).join('');
+
+  const mtWrap = document.getElementById('modeling-type-checkboxes');
+  mtWrap.innerHTML = MODELING_TYPES.map(function (t, i) {
+    return '<label><input type="checkbox" name="modelingTypeOption" value="' + escapeHtml(t) + '" data-idx="' + i + '"> ' + escapeHtml(t) + '</label>';
+  }).join('');
+}
+
+// ---------- submission form ----------
+
+document.getElementById('submit-form').addEventListener('submit', async function (ev) {
+  ev.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const msg = document.getElementById('form-msg');
+  const fd = new FormData(ev.target);
+  const payload = { action: 'submit' };
+  fd.forEach(function (v, k) {
+    if (k === 'modelingTypeOption') return; // handled separately below
+    payload[k] = v;
+  });
+  const checkedTypes = Array.from(ev.target.querySelectorAll('input[name="modelingTypeOption"]:checked'))
+    .map(function (el) { return el.value; });
+  payload.modelingType = checkedTypes.join(', ');
+
+  if (USING_DEMO_DATA) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Demo mode — connect API_URL to actually accept submissions.';
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'SUBMITTING...';
+  msg.textContent = '';
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      msg.className = 'form-msg ok';
+      msg.textContent = "Thanks! Your event is pending review and will appear once approved.";
+      ev.target.reset();
+    } else {
+      throw new Error(data.error || 'unknown error');
+    }
+  } catch (err) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Something went wrong — please try again.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'SUBMIT';
+  }
+});
+
+// ---------- nav ----------
+
+document.getElementById('nav-events').addEventListener('click', function (ev) { ev.preventDefault(); window.scrollTo({top:0, behavior:'smooth'}); });
+document.getElementById('nav-submit').addEventListener('click', function (ev) { ev.preventDefault(); document.getElementById('submit-section').scrollIntoView({behavior:'smooth'}); });
+document.getElementById('nav-contact').addEventListener('click', function (ev) { ev.preventDefault(); document.getElementById('contact-section').scrollIntoView({behavior:'smooth'}); });
+
+document.getElementById('nav-admin').addEventListener('click', function () {
+  document.getElementById('public-view').style.display = 'none';
+  document.getElementById('admin-view').style.display = 'block';
+});
+document.getElementById('admin-back').addEventListener('click', function () {
+  document.getElementById('admin-view').style.display = 'none';
+  document.getElementById('public-view').style.display = 'block';
+});
+
+// ---------- admin ----------
+
+let adminPin = null;
+
+document.getElementById('pin-submit').addEventListener('click', async function () {
+  const pin = document.getElementById('pin-input').value;
+  const pinMsg = document.getElementById('pin-msg');
+  if (USING_DEMO_DATA) {
+    pinMsg.textContent = 'Demo mode — connect API_URL to enable admin approvals.';
+    return;
+  }
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'pending', pin: pin })
+    });
+    const data = await res.json();
+    if (data.error) {
+      pinMsg.textContent = 'Incorrect PIN.';
+      return;
+    }
+    adminPin = pin;
+    document.getElementById('pin-box').style.display = 'none';
+    document.getElementById('pending-list').style.display = 'block';
+    renderPending(data);
+  } catch (err) {
+    pinMsg.textContent = 'Could not reach the server.';
+  }
+});
+
+function renderPending(items) {
+  const wrap = document.getElementById('pending-list');
+  wrap.innerHTML = '<h2 style="margin-bottom:16px;">Pending submissions (' + items.length + ')</h2>';
+  if (items.length === 0) {
+    wrap.innerHTML += '<p style="color:var(--muted);">Nothing waiting on review.</p>';
+    return;
+  }
+  items.forEach(function (item) {
+    const card = document.createElement('div');
+    card.className = 'pending-card';
+    card.innerHTML =
+      '<img src="' + (item.imageUrl || '') + '" onerror="this.style.display=\'none\'" alt="">' +
+      '<div class="pending-info">' +
+        '<h3>' + escapeHtml(item.eventName) + '</h3>' +
+        '<p>' + escapeHtml(item.venue) + ' · ' + escapeHtml(item.neighborhood) + '</p>' +
+        '<p>' + fmtDateTime(item.eventDate, item.startTime) + ' – ' + escapeHtml(item.endTime || '') + '</p>' +
+        '<p>$' + escapeHtml(String(item.cost)) + ' · submitted by ' + escapeHtml(item.email || '') + '</p>' +
+        (item.modelingType ? '<p>Modeling: ' + escapeHtml(item.modelingType) + '</p>' : '') +
+        (item.description ? '<p>"' + escapeHtml(item.description) + '"</p>' : '') +
+        '<p>Wants database opt-in: ' + escapeHtml(item.joinDatabase === 'yes' ? 'Yes' : 'No') + '</p>' +
+        '<div class="pending-actions">' +
+          '<button class="btn-approve" data-id="' + item.id + '" data-action="approve">Approve</button>' +
+          '<button class="btn-reject" data-id="' + item.id + '" data-action="reject">Reject</button>' +
+        '</div>' +
+      '</div>';
+    wrap.appendChild(card);
+  });
+
+  wrap.querySelectorAll('button[data-action]').forEach(function (btn) {
+    btn.addEventListener('click', async function () {
+      btn.disabled = true;
+      const id = btn.getAttribute('data-id');
+      const action = btn.getAttribute('data-action');
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: action, id: id, pin: adminPin })
+        });
+        const data = await res.json();
+        if (data.success) {
+          btn.closest('.pending-card').remove();
+        }
+      } catch (err) {
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+function applyHeroImages() {
+  if (HERO_IMAGE_LEFT) document.getElementById('hero-oval-left').style.backgroundImage = 'url(' + HERO_IMAGE_LEFT + ')';
+  if (HERO_IMAGE_RIGHT) document.getElementById('hero-oval-right').style.backgroundImage = 'url(' + HERO_IMAGE_RIGHT + ')';
+}
+
+// ---------- go ----------
+showBanner();
+applyHeroImages();
+populateTimeSelects();
+populateFormFields();
+loadEvents();
+</script>
+</body>
+</html>
