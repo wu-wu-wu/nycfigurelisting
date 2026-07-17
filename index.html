@@ -401,7 +401,7 @@ const MODELING_TYPES = [
 ];
 
 let allEvents = [];
-let selectedDate = 'YYYY-MM-DD'     //'YYYY-MM-DD' or null
+let selectedDate = null    //'YYYY-MM-DD' or null
 let activeFilters = { price: null, neighborhood: null, modelingType: new Set() };
 let calMonth = new Date().getMonth();
 let calYear = new Date().getFullYear();
@@ -552,6 +552,7 @@ function renderFilters() {
 }
 
 // ---------- cards ----------
+  /*
 function fmtDateTime(dateStr, startTime) {
   if (!dateStr) return '';
   // Force the date string to exactly 10 characters (YYYY-MM-DD)
@@ -613,8 +614,8 @@ function escapeHtml(str) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
 }
+*/
 
-/*
 // Update 07-17-2026
 function fmtDateTime(dateStr, startTime) {
   if (!dateStr) return '';
@@ -711,7 +712,6 @@ function escapeHtml(str) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
 }
-*/
   
 // ---------- time selects ----------
 
