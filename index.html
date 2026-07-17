@@ -401,7 +401,7 @@ const MODELING_TYPES = [
 ];
 
 let allEvents = [];
-let selectedDate = null;      // 'YYYY-MM-DD' or null
+let selectedDate = 'YYYY-MM-DD'     //'YYYY-MM-DD' or null
 let activeFilters = { price: null, neighborhood: null, modelingType: new Set() };
 let calMonth = new Date().getMonth();
 let calYear = new Date().getFullYear();
@@ -596,8 +596,7 @@ function renderCards() {
     card.innerHTML =
       '<img src="' + (e.imageUrl || '') + '" onerror="this.style.display=\'none\'" alt="">' +
       '<div class="card-body">' +
-        <div class="card-date'> + '</div>' +
-        //'<div class="card-date">' + fmtDateTime(e.eventDate, e.startTime) + '</div>' +
+        '<div class="card-date">' + fmtDateTime(e.eventDate, e.startTime) + '</div>' +
         '<h3 class="card-title">' + escapeHtml(e.eventName) + '</h3>' +
         '<div class="card-venue">' + escapeHtml(e.venue || '') + (e.neighborhood ? ' · ' + escapeHtml(e.neighborhood) : '') + '</div>' +
         (e.description ? '<div class="card-desc">' + escapeHtml(e.description) + '</div>' : '') +
