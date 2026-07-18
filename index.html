@@ -552,7 +552,7 @@ function renderFilters() {
 }
 
 // ---------- cards ----------
-
+/*
 function fmtDateTime(dateStr, startTime) {
   if (!dateStr) return '';
   // Force the date string to exactly 10 characters (YYYY-MM-DD)
@@ -608,16 +608,10 @@ function renderCards() {
     grid.appendChild(card);
   });
 }
+*/
 
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, function (c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-  });
-}
-
-  /*
-  //update 7/18/26
-function fmtDateTime(dateStr, startTime) {
+//update 7/18/26
+  function fmtDateTime(dateStr, startTime) {
   if (!dateStr) return '';
 
   // 1. Only accept a real YYYY-MM-DD prefix — anything else bails out cleanly
@@ -642,70 +636,8 @@ function fmtDateTime(dateStr, startTime) {
 
   return dayPart + (timePart ? ' · ' + timePart : '');
 }
-What to do
-Paste the code.gs fix in (normalizeDate/normalizeTime + updated rowsToObjects), redeploy the Apps Script web app (Deploy → Manage deployments → Edit → new version).
-Paste the fmtDateTime fix into index.html.
-Open your Sheet, select the eventDate, startTime, endTime columns, and check Format → Number. If any show as "Plain text" instead of "Date"/"Time", that confirms the theory — the new server-side normalization will paper over it regardless, but you can also fix the column format going forward so new manual entries behave.
-If it's still off after this, paste me one raw row from that ?action=events JSON (the eventDate/startTime values specifically) and I'll pinpoint the exact format it's arriving in.
 
-function renderCards() {
-  let filtered = allEvents.slice();
   
-  // Normalize comparison slice to handle varied string outputs from your Sheets webhook
-  if (selectedDate) {
-    filtered = filtered.filter(function (e) { 
-      return e.eventDate && String(e.eventDate).slice(0, 10) === selectedDate; 
-    });
-  }
-  
-  if (activeFilters.price) filtered = filtered.filter(function (e) { return priceTier(e.cost) === activeFilters.price; });
-  if (activeFilters.neighborhood) filtered = filtered.filter(function (e) { return e.neighborhood === activeFilters.neighborhood; });
-  if (activeFilters.modelingType.size > 0) {
-    filtered = filtered.filter(function (e) {
-      const tags = (e.modelingType || '').split(',').map(function (t) { return t.trim(); });
-      return tags.some(function (t) { return activeFilters.modelingType.has(t); });
-    });
-  }
-
-  // Robust string comparison sort that tolerates undefined values gracefully
-  filtered.sort(function (a, b) { 
-    const keyA = (String(a.eventDate || '')).slice(0, 10) + ' ' + (a.startTime || '00:00');
-    const keyB = (String(b.eventDate || '')).slice(0, 10) + ' ' + (b.startTime || '00:00');
-    return keyA.localeCompare(keyB);
-  });
-
-  const meta = document.getElementById('results-meta');
-  meta.textContent = filtered.length + (filtered.length === 1 ? ' event' : ' events') +
-    (selectedDate ? ' on ' + selectedDate : '') +
-    (activeFilters.price || activeFilters.neighborhood ? ' matching filters' : '');
-
-  const grid = document.getElementById('card-grid');
-  grid.innerHTML = '';
-
-  if (filtered.length === 0) {
-    grid.innerHTML = '<div class="empty-state">No events match right now — try clearing a filter.</div>';
-    return;
-  }
-
-  filtered.forEach(function (e) {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML =
-      '<img src="' + (e.imageUrl || '') + '" onerror="this.style.display=\'none\'" alt="">' +
-      '<div class="card-body">' +
-        '<div class="card-date">' + fmtDateTime(e.eventDate, e.startTime) + '</div>' +
-        '<h3 class="card-title">' + escapeHtml(e.eventName) + '</h3>' +
-        '<div class="card-venue">' + escapeHtml(e.venue || '') + (e.neighborhood ? ' · ' + escapeHtml(e.neighborhood) : '') + '</div>' +
-        (e.description ? '<div class="card-desc">' + escapeHtml(e.description) + '</div>' : '') +
-        '<div class="card-actions">' +
-          '<a class="btn-ticket" href="' + (e.ticketLink || '#') + '" target="_blank" rel="noopener">Tickets</a>' +
-          '<span class="more-details">$' + escapeHtml(String(e.cost || '')) + (e.materialsIncluded === 'yes' ? ' · materials incl.' : '') + '</span>' +
-        '</div>' +
-      '</div>';
-    grid.appendChild(card);
-  });
-}
-*/
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
