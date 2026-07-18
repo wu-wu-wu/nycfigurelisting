@@ -552,7 +552,7 @@ function renderFilters() {
 }
 
 // ---------- cards ----------
-  /*
+
 function fmtDateTime(dateStr, startTime) {
   if (!dateStr) return '';
   // Force the date string to exactly 10 characters (YYYY-MM-DD)
@@ -614,8 +614,8 @@ function escapeHtml(str) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
 }
-*/
 
+  /*
   //update 7/18/26
 function fmtDateTime(dateStr, startTime) {
   if (!dateStr) return '';
@@ -705,7 +705,7 @@ function renderCards() {
     grid.appendChild(card);
   });
 }
-
+*/
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
