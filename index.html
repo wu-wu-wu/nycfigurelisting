@@ -616,38 +616,37 @@ function escapeHtml(str) {
 }
 */
 
-// Update 07-17-2026
+  //update 7/18/26
 function fmtDateTime(dateStr, startTime) {
   if (!dateStr) return '';
-  
-  // 1. Clean the date string: Extract just YYYY-MM-DD from Google Sheets
-  const safeDateStr = String(dateStr).slice(0, 10); 
-  
-  // 2. Extract hours/minutes, fallback to midnight if empty
-  const timeStr = startTime ? startTime.trim() : '00:00'; 
-  
+
+  // 1. Only accept a real YYYY-MM-DD prefix — anything else bails out cleanly
+  const raw = String(dateStr).trim();
+  const dateMatch = raw.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (!dateMatch) return '';
+  const safeDateStr = dateMatch[1];
+
+  // 2. Extract hours/minutes, fallback to midnight if empty/garbled
+  const timeMatch = startTime ? String(startTime).trim().match(/^(\d{1,2}):(\d{2})/) : null;
+  const timeStr = timeMatch ? timeMatch[1].padStart(2, '0') + ':' + timeMatch[2] : '00:00';
+
   // 3. Build a precise local ISO timestamp to prevent timezone shifting
-  const localIsoString = safeDateStr + 'T' + timeStr;
-  const d = new Date(localIsoString);
-  
+  const d = new Date(safeDateStr + 'T' + timeStr);
+
   // 4. Fallback check for corrupt rows or empty data
   if (isNaN(d.getTime())) return '';
 
   // 5. Format layout variables
-  const dayPart = d.toLocaleDateString('en-US', { 
-    weekday: 'short', 
-    month: 'numeric', 
-    day: 'numeric',
-    timeZone: undefined // Automatically falls back to user browser timezone
-  });
-  
-  const timePart = startTime ? d.toLocaleTimeString('en-US', { 
-    hour: 'numeric', 
-    minute: '2-digit' 
-  }) : '';
-  
+  const dayPart = d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
+  const timePart = timeMatch ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+
   return dayPart + (timePart ? ' · ' + timePart : '');
 }
+What to do
+Paste the code.gs fix in (normalizeDate/normalizeTime + updated rowsToObjects), redeploy the Apps Script web app (Deploy → Manage deployments → Edit → new version).
+Paste the fmtDateTime fix into index.html.
+Open your Sheet, select the eventDate, startTime, endTime columns, and check Format → Number. If any show as "Plain text" instead of "Date"/"Time", that confirms the theory — the new server-side normalization will paper over it regardless, but you can also fix the column format going forward so new manual entries behave.
+If it's still off after this, paste me one raw row from that ?action=events JSON (the eventDate/startTime values specifically) and I'll pinpoint the exact format it's arriving in.
 
 function renderCards() {
   let filtered = allEvents.slice();
