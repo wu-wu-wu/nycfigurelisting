@@ -125,6 +125,22 @@
   .empty-state { padding: 40px 0; text-align: center; color: var(--muted); }
   .more-events-link { display: block; text-align: right; margin: 24px 0 8px; font-weight: 700; text-decoration: underline; }
 
+  /* ---- card tags (modeling type + recurring badge) ---- */
+  .card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+  .card-tag {
+    background: var(--cream); border: 1px solid var(--border); border-radius: 20px;
+    padding: 2px 9px; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.02em; color: var(--ink);
+  }
+  .card-tag.recurring { background: var(--lime); border-color: var(--lime-dark); }
+
+  /* ---- load more ---- */
+  .load-more-wrap { text-align: center; margin: 32px 0 8px; }
+  .btn-load-more {
+    background: var(--black); color: #fff; font-weight: 700; font-size: 0.85rem;
+    padding: 12px 26px; border-radius: var(--radius); letter-spacing: 0.04em;
+  }
+  .btn-load-more:hover { background: #2a251d; }
+
   /* ---- submit section ---- */
   .submit-section {
     background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('./pexels-feyzayildirimphoto-11796172.png');
@@ -243,6 +259,9 @@
       <section>
         <div class="results-meta" id="results-meta"></div>
         <div class="card-grid" id="card-grid"></div>
+        <div class="load-more-wrap" id="load-more-wrap" style="display:none;">
+          <button class="btn-load-more" id="load-more-btn">Load more events</button>
+        </div>
       </section>
     </div>
   </main>
@@ -295,6 +314,26 @@
           </select>
         </div>
         <div class="field">
+          <label>RECURRING EVENT?</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" id="isRecurringCheckbox"> This event repeats on a schedule</label>
+          </div>
+        </div>
+        <div class="field field-row" id="recurrence-fields" style="display:none; grid-template-columns: 1fr 1fr;">
+          <div>
+            <label>REPEATS</label>
+            <select name="recurrenceFrequency" id="recurrenceFrequency">
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">Every 2 weeks</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          <div>
+            <label>REPEATS UNTIL (optional)</label>
+            <input type="date" name="recurrenceEndDate" id="recurrenceEndDate">
+          </div>
+        </div>
+        <div class="field">
           <label>TYPE OF MODELING (select all that apply)</label>
           <div class="checkbox-group" id="modeling-type-checkboxes"></div>
         </div>
@@ -327,8 +366,8 @@
     <div>
       <h2>Contact:</h2>
       <div class="contact-lines">
-        <a href="mailto:nycfigurelisting@gmail.com">nycfigurelisting@gmail.com</a>
-        <a href="https://www.instagram.com/nyc_figure_listing/" target="_blank" rel="noopener">@nyc_figure_listing</a>
+        <a href="mailto:figurelistingnyc@gmail.com">figurelistingnyc@gmail.com</a>
+        <a href="https://www.instagram.com/nyc_figure_listing/" target="_blank" rel="noopener">Instagram</a>
       </div>
     </div>
     <div class="newsletter">
@@ -377,10 +416,20 @@ const HERO_IMAGE_RIGHT = "./HERO_IMAGE_RIGHT.png";
 const USING_DEMO_DATA = !API_URL || API_URL.indexOf("PASTE_YOUR") === 0;
 
 const DEMO_EVENTS = [
-  { id: '1', eventName: '$15 Nude Figure Drawing Session', venue: 'The Brooklyn Loft', neighborhood: 'Greenpoint', eventDate: '2025-12-07', startTime: '14:30', endTime: '16:30', cost: '15', ticketLink: '#', imageUrl: '' },
-  { id: '2', eventName: 'Anatomy Lesson', venue: 'Club Cumming', neighborhood: 'East Village', eventDate: '2025-12-07', startTime: '17:00', endTime: '19:00', cost: '20', ticketLink: '#', imageUrl: '' },
-  { id: '3', eventName: 'Figure Drawing at Enochs', venue: 'Enochs', neighborhood: 'Bushwick', eventDate: '2025-12-08', startTime: '18:30', endTime: '20:30', cost: '22', ticketLink: '#', imageUrl: '' },
-  { id: '4', eventName: 'Greenpoint Figure Drawing', venue: '67 West St #303', neighborhood: 'Greenpoint', eventDate: '2025-12-08', startTime: '19:00', endTime: '21:00', cost: '18', ticketLink: '#', imageUrl: '' },
+  { id: '1', eventName: '$15 Nude Figure Drawing Session', venue: 'The Brooklyn Loft', neighborhood: 'Greenpoint', eventDate: '2025-12-07', startTime: '14:30', endTime: '16:30', cost: '15', ticketLink: '#', imageUrl: '', modelingType: 'Nude, Long poses (30+ min)', isRecurring: 'yes', recurrenceFrequency: 'weekly' },
+  { id: '2', eventName: 'Anatomy Lesson', venue: 'Club Cumming', neighborhood: 'East Village', eventDate: '2025-12-07', startTime: '17:00', endTime: '19:00', cost: '20', ticketLink: '#', imageUrl: '', modelingType: 'Clothed / costume' },
+  { id: '3', eventName: 'Figure Drawing at Enochs', venue: 'Enochs', neighborhood: 'Bushwick', eventDate: '2025-12-08', startTime: '18:30', endTime: '20:30', cost: '22', ticketLink: '#', imageUrl: '', modelingType: 'Short poses, Nude' },
+  { id: '4', eventName: 'Greenpoint Figure Drawing', venue: '67 West St #303', neighborhood: 'Greenpoint', eventDate: '2025-12-08', startTime: '19:00', endTime: '21:00', cost: '18', ticketLink: '#', imageUrl: '', modelingType: 'Long poses (30+ min)', isRecurring: 'yes', recurrenceFrequency: 'biweekly' },
+  { id: '5', eventName: 'Astoria Sketch Night', venue: 'The Yard', neighborhood: 'Astoria', eventDate: '2025-12-09', startTime: '18:00', endTime: '20:00', cost: '25', ticketLink: '#', imageUrl: '', modelingType: 'Short poses' },
+  { id: '6', eventName: 'Bed-Stuy Drawing Circle', venue: 'Herbert Von King Studio', neighborhood: 'Bed-Stuy', eventDate: '2025-12-09', startTime: '19:30', endTime: '21:30', cost: '20', ticketLink: '#', imageUrl: '', modelingType: 'Nude' },
+  { id: '7', eventName: 'Park Slope Life Drawing', venue: 'The Old Stone House', neighborhood: 'Park Slope', eventDate: '2025-12-10', startTime: '18:00', endTime: '20:00', cost: '18', ticketLink: '#', imageUrl: '', modelingType: 'Clothed / costume, Short poses' },
+  { id: '8', eventName: 'Ridgewood Sketch Salon', venue: 'Onderdonk House', neighborhood: 'Ridgewood', eventDate: '2025-12-11', startTime: '19:00', endTime: '21:00', cost: '15', ticketLink: '#', imageUrl: '', modelingType: 'Long poses (30+ min)' },
+  { id: '9', eventName: 'LES Late Night Draw', venue: 'Clemente Center', neighborhood: 'Lower East Side', eventDate: '2025-12-11', startTime: '21:00', endTime: '23:00', cost: '20', ticketLink: '#', imageUrl: '', modelingType: 'Nude, Short poses', isRecurring: 'yes', recurrenceFrequency: 'monthly' },
+  { id: '10', eventName: 'Williamsburg Studio Draw', venue: 'The Yard Wburg', neighborhood: 'Williamsburg', eventDate: '2025-12-12', startTime: '17:30', endTime: '19:30', cost: '22', ticketLink: '#', imageUrl: '', modelingType: 'Long poses (30+ min)' },
+  { id: '11', eventName: 'Bushwick Open Studio Draw', venue: 'Bushwick Print Lab', neighborhood: 'Bushwick', eventDate: '2025-12-12', startTime: '19:00', endTime: '21:00', cost: '18', ticketLink: '#', imageUrl: '', modelingType: 'Participatory (attendee is the model)' },
+  { id: '12', eventName: 'East Village Figure Study', venue: 'Le Poisson Rouge', neighborhood: 'East Village', eventDate: '2025-12-13', startTime: '18:00', endTime: '20:00', cost: '25', ticketLink: '#', imageUrl: '', modelingType: 'Nude, Long poses (30+ min)' },
+  { id: '13', eventName: 'Greenpoint Costume Draw', venue: 'The Yard Greenpoint', neighborhood: 'Greenpoint', eventDate: '2025-12-13', startTime: '19:00', endTime: '21:00', cost: '20', ticketLink: '#', imageUrl: '', modelingType: 'Clothed / costume' },
+  { id: '14', eventName: 'Astoria Anatomy Draw', venue: 'Kaufman Studios', neighborhood: 'Astoria', eventDate: '2025-12-14', startTime: '18:30', endTime: '20:30', cost: '22', ticketLink: '#', imageUrl: '', modelingType: 'Short poses, Nude', isRecurring: 'yes', recurrenceFrequency: 'weekly' },
 ];
 
 // Edit this list to match the neighborhoods you actually cover.
@@ -405,6 +454,8 @@ let selectedDate = null    //'YYYY-MM-DD' or null
 let activeFilters = { price: null, neighborhood: null, modelingType: new Set() };
 let calMonth = new Date().getMonth();
 let calYear = new Date().getFullYear();
+const PAGE_SIZE = 12;
+let visibleCount = PAGE_SIZE;
 
 // ---------- boot ----------
 
@@ -418,33 +469,11 @@ async function loadEvents() {
   if (USING_DEMO_DATA) { allEvents = DEMO_EVENTS; renderAll(); return; }
   try {
     const res = await fetch(API_URL + '?action=events');
-    if (!res.ok) {
-      // Apps Script returned something other than 200 -- most often
-      // this means the deployment's "Who has access" isn't set to
-      // "Anyone", so anonymous visitors get redirected to a Google
-      // login/consent page instead of your JSON.
-      throw new Error('HTTP ' + res.status);
-    }
-    const text = await res.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (parseErr) {
-      // We got a response, but it wasn't JSON -- almost always an
-      // HTML login/consent page from Google, again pointing at the
-      // deployment's access setting rather than a code bug.
-      console.error('Expected JSON from API_URL but got:', text.slice(0, 300));
-      throw new Error('non-JSON response (check deployment access is set to "Anyone")');
-    }
+    const data = await res.json();
     allEvents = Array.isArray(data) ? data : [];
-    if (!Array.isArray(data)) {
-      console.error('API_URL responded but not with an array:', data);
-    }
   } catch (err) {
-    console.error('loadEvents failed:', err);
     allEvents = [];
-    document.getElementById('results-meta').textContent =
-      'Could not load events right now (' + err.message + '). Check the browser console for details.';
+    document.getElementById('results-meta').textContent = 'Could not load events right now.';
   }
   renderAll();
 }
@@ -462,7 +491,7 @@ function groupByDate(events) {
   const map = {};
   events.forEach(function (e) {
     if (!e.eventDate) return;
-    const key = String(e.eventDate).slice(0, 10);
+    const key = e.eventDate.slice(0, 10);
     (map[key] = map[key] || []).push(e);
   });
   return map;
@@ -496,6 +525,7 @@ function renderCalendar(eventsByDate) {
     btn.textContent = d;
     btn.addEventListener('click', function () {
       selectedDate = (selectedDate === dateStr) ? null : dateStr;
+      visibleCount = PAGE_SIZE;
       renderAll();
     });
     grid.appendChild(btn);
@@ -513,7 +543,7 @@ document.getElementById('cal-next').addEventListener('click', function () {
   renderAll();
 });
 document.getElementById('cal-clear').addEventListener('click', function () {
-  selectedDate = null; renderAll();
+  selectedDate = null; visibleCount = PAGE_SIZE; renderAll();
 });
 
 // ---------- filters ----------
@@ -538,6 +568,7 @@ function renderFilters() {
     btn.textContent = tier;
     btn.addEventListener('click', function () {
       activeFilters.price = (activeFilters.price === tier) ? null : tier;
+      visibleCount = PAGE_SIZE;
       renderAll();
     });
     priceEl.appendChild(btn);
@@ -551,6 +582,7 @@ function renderFilters() {
     btn.textContent = n;
     btn.addEventListener('click', function () {
       activeFilters.neighborhood = (activeFilters.neighborhood === n) ? null : n;
+      visibleCount = PAGE_SIZE;
       renderAll();
     });
     nbEl.appendChild(btn);
@@ -567,6 +599,7 @@ function renderFilters() {
     btn.addEventListener('click', function () {
       if (activeFilters.modelingType.has(t)) activeFilters.modelingType.delete(t);
       else activeFilters.modelingType.add(t);
+      visibleCount = PAGE_SIZE;
       renderAll();
     });
     mtEl.appendChild(btn);
@@ -574,42 +607,20 @@ function renderFilters() {
 }
 
 // ---------- cards ----------
-
+  /*
 function fmtDateTime(dateStr, startTime) {
   if (!dateStr) return '';
-
-  // 1. Only accept a real YYYY-MM-DD prefix — anything else bails out cleanly
-  const raw = String(dateStr).trim();
-  const dateMatch = raw.match(/^(\d{4}-\d{2}-\d{2})/);
-  if (!dateMatch) return '';
-  const safeDateStr = dateMatch[1];
-
-  // 2. Extract hours/minutes, fallback to midnight if empty/garbled
-  const timeMatch = startTime ? String(startTime).trim().match(/^(\d{1,2}):(\d{2})/) : null;
-  const timeStr = timeMatch ? timeMatch[1].padStart(2, '0') + ':' + timeMatch[2] : '00:00';
-
-  // 3. Build a precise local ISO timestamp to prevent timezone shifting
-  const d = new Date(safeDateStr + 'T' + timeStr);
-
-  // 4. Fallback check for corrupt rows or empty data
-  if (isNaN(d.getTime())) return '';
-
-  // 5. Format layout variables
+  // Force the date string to exactly 10 characters (YYYY-MM-DD)
+  const safeDateStr = dateStr.slice(0, 10);
+  const d = new Date(safeDateStr + 'T' + (startTime || '00:00'));
   const dayPart = d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
-  const timePart = timeMatch ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
-
+  const timePart = startTime ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
   return dayPart + (timePart ? ' · ' + timePart : '');
 }
 
 function renderCards() {
   let filtered = allEvents.slice();
-
-  if (selectedDate) {
-    filtered = filtered.filter(function (e) {
-      return e.eventDate && String(e.eventDate).slice(0, 10) === selectedDate;
-    });
-  }
-
+  if (selectedDate) filtered = filtered.filter(function (e) { return e.eventDate && e.eventDate.slice(0, 10) === selectedDate; });
   if (activeFilters.price) filtered = filtered.filter(function (e) { return priceTier(e.cost) === activeFilters.price; });
   if (activeFilters.neighborhood) filtered = filtered.filter(function (e) { return e.neighborhood === activeFilters.neighborhood; });
   if (activeFilters.modelingType.size > 0) {
@@ -619,11 +630,7 @@ function renderCards() {
     });
   }
 
-  filtered.sort(function (a, b) {
-    const keyA = (String(a.eventDate || '')).slice(0, 10) + ' ' + (a.startTime || '00:00');
-    const keyB = (String(b.eventDate || '')).slice(0, 10) + ' ' + (b.startTime || '00:00');
-    return keyA.localeCompare(keyB);
-  });
+  filtered.sort(function (a, b) { return (a.eventDate + a.startTime).localeCompare(b.eventDate + b.startTime); });
 
   const meta = document.getElementById('results-meta');
   meta.textContent = filtered.length + (filtered.length === 1 ? ' event' : ' events') +
@@ -662,7 +669,132 @@ function escapeHtml(str) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
 }
+*/
 
+// Update 07-17-2026
+function fmtDateTime(dateStr, startTime) {
+  if (!dateStr) return '';
+  
+  // 1. Clean the date string: Extract just YYYY-MM-DD from Google Sheets
+  const safeDateStr = String(dateStr).slice(0, 10); 
+  
+  // 2. Extract hours/minutes, fallback to midnight if empty
+  const timeStr = startTime ? startTime.trim() : '00:00'; 
+  
+  // 3. Build a precise local ISO timestamp to prevent timezone shifting
+  const localIsoString = safeDateStr + 'T' + timeStr;
+  const d = new Date(localIsoString);
+  
+  // 4. Fallback check for corrupt rows or empty data
+  if (isNaN(d.getTime())) return '';
+
+  // 5. Format layout variables
+  const dayPart = d.toLocaleDateString('en-US', { 
+    weekday: 'short', 
+    month: 'numeric', 
+    day: 'numeric',
+    timeZone: undefined // Automatically falls back to user browser timezone
+  });
+  
+  const timePart = startTime ? d.toLocaleTimeString('en-US', { 
+    hour: 'numeric', 
+    minute: '2-digit' 
+  }) : '';
+  
+  return dayPart + (timePart ? ' · ' + timePart : '');
+}
+
+function renderCards() {
+  let filtered = allEvents.slice();
+  
+  // Normalize comparison slice to handle varied string outputs from your Sheets webhook
+  if (selectedDate) {
+    filtered = filtered.filter(function (e) { 
+      return e.eventDate && String(e.eventDate).slice(0, 10) === selectedDate; 
+    });
+  }
+  
+  if (activeFilters.price) filtered = filtered.filter(function (e) { return priceTier(e.cost) === activeFilters.price; });
+  if (activeFilters.neighborhood) filtered = filtered.filter(function (e) { return e.neighborhood === activeFilters.neighborhood; });
+  if (activeFilters.modelingType.size > 0) {
+    filtered = filtered.filter(function (e) {
+      const tags = (e.modelingType || '').split(',').map(function (t) { return t.trim(); });
+      return tags.some(function (t) { return activeFilters.modelingType.has(t); });
+    });
+  }
+
+  // Robust string comparison sort that tolerates undefined values gracefully
+  filtered.sort(function (a, b) { 
+    const keyA = (String(a.eventDate || '')).slice(0, 10) + ' ' + (a.startTime || '00:00');
+    const keyB = (String(b.eventDate || '')).slice(0, 10) + ' ' + (b.startTime || '00:00');
+    return keyA.localeCompare(keyB);
+  });
+
+  // ---- pagination: only show up to visibleCount, with a "Load more" button for the rest ----
+  const shown = filtered.slice(0, visibleCount);
+
+  const meta = document.getElementById('results-meta');
+  meta.textContent = (filtered.length === 0 ? '0 events' :
+    'Showing ' + shown.length + ' of ' + filtered.length + (filtered.length === 1 ? ' event' : ' events')) +
+    (selectedDate ? ' on ' + selectedDate : '') +
+    (activeFilters.price || activeFilters.neighborhood || activeFilters.modelingType.size > 0 ? ' matching filters' : '');
+
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = '';
+
+  const loadMoreWrap = document.getElementById('load-more-wrap');
+  const loadMoreBtn = document.getElementById('load-more-btn');
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state">No events match right now — try clearing a filter.</div>';
+    loadMoreWrap.style.display = 'none';
+    return;
+  }
+
+  shown.forEach(function (e) {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    // Build tag badges: each selected modeling type, plus a "Recurring" badge if applicable.
+    const modelingTags = (e.modelingType || '').split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+    const isRecurring = e.isRecurring === 'yes' || e.isRecurring === true;
+    const tagsHtml = (modelingTags.length || isRecurring)
+      ? '<div class="card-tags">' +
+          modelingTags.map(function (t) { return '<span class="card-tag">' + escapeHtml(t) + '</span>'; }).join('') +
+          (isRecurring ? '<span class="card-tag recurring">Recurring' + (e.recurrenceFrequency ? ' · ' + escapeHtml(e.recurrenceFrequency) : '') + '</span>' : '') +
+        '</div>'
+      : '';
+
+    card.innerHTML =
+      '<img src="' + (e.imageUrl || '') + '" onerror="this.style.display=\'none\'" alt="">' +
+      '<div class="card-body">' +
+        '<div class="card-date">' + fmtDateTime(e.eventDate, e.startTime) + '</div>' +
+        '<h3 class="card-title">' + escapeHtml(e.eventName) + '</h3>' +
+        '<div class="card-venue">' + escapeHtml(e.venue || '') + (e.neighborhood ? ' · ' + escapeHtml(e.neighborhood) : '') + '</div>' +
+        tagsHtml +
+        (e.description ? '<div class="card-desc">' + escapeHtml(e.description) + '</div>' : '') +
+        '<div class="card-actions">' +
+          '<a class="btn-ticket" href="' + (e.ticketLink || '#') + '" target="_blank" rel="noopener">Tickets</a>' +
+          '<span class="more-details">$' + escapeHtml(String(e.cost || '')) + (e.materialsIncluded === 'yes' ? ' · materials incl.' : '') + '</span>' +
+        '</div>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+
+  if (filtered.length > visibleCount) {
+    loadMoreWrap.style.display = 'block';
+    loadMoreBtn.textContent = 'Load more events (' + (filtered.length - visibleCount) + ' more)';
+  } else {
+    loadMoreWrap.style.display = 'none';
+  }
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+  
 // ---------- time selects ----------
 
 function populateTimeSelects() {
@@ -694,6 +826,12 @@ function populateFormFields() {
   }).join('');
 }
 
+// ---------- recurring event toggle ----------
+
+document.getElementById('isRecurringCheckbox').addEventListener('change', function (ev) {
+  document.getElementById('recurrence-fields').style.display = ev.target.checked ? 'grid' : 'none';
+});
+
 // ---------- submission form ----------
 
 document.getElementById('submit-form').addEventListener('submit', async function (ev) {
@@ -709,6 +847,13 @@ document.getElementById('submit-form').addEventListener('submit', async function
   const checkedTypes = Array.from(ev.target.querySelectorAll('input[name="modelingTypeOption"]:checked'))
     .map(function (el) { return el.value; });
   payload.modelingType = checkedTypes.join(', ');
+
+  const isRecurring = document.getElementById('isRecurringCheckbox').checked;
+  payload.isRecurring = isRecurring ? 'yes' : 'no';
+  if (isRecurring) {
+    payload.recurrenceFrequency = document.getElementById('recurrenceFrequency').value;
+    payload.recurrenceEndDate = document.getElementById('recurrenceEndDate').value || '';
+  }
 
   if (USING_DEMO_DATA) {
     msg.className = 'form-msg err';
@@ -728,6 +873,7 @@ document.getElementById('submit-form').addEventListener('submit', async function
       msg.className = 'form-msg ok';
       msg.textContent = "Thanks! Your event is pending review and will appear once approved.";
       ev.target.reset();
+      document.getElementById('recurrence-fields').style.display = 'none';
     } else {
       throw new Error(data.error || 'unknown error');
     }
@@ -737,6 +883,13 @@ document.getElementById('submit-form').addEventListener('submit', async function
   } finally {
     btn.disabled = false; btn.textContent = 'SUBMIT';
   }
+});
+
+// ---------- pagination ----------
+
+document.getElementById('load-more-btn').addEventListener('click', function () {
+  visibleCount += PAGE_SIZE;
+  renderCards();
 });
 
 // ---------- nav ----------
@@ -802,6 +955,7 @@ function renderPending(items) {
         '<p>' + fmtDateTime(item.eventDate, item.startTime) + ' – ' + escapeHtml(item.endTime || '') + '</p>' +
         '<p>$' + escapeHtml(String(item.cost)) + ' · submitted by ' + escapeHtml(item.email || '') + '</p>' +
         (item.modelingType ? '<p>Modeling: ' + escapeHtml(item.modelingType) + '</p>' : '') +
+        ((item.isRecurring === 'yes' || item.isRecurring === true) ? '<p>Recurring: ' + escapeHtml(item.recurrenceFrequency || '') + (item.recurrenceEndDate ? ' until ' + escapeHtml(item.recurrenceEndDate) : '') + '</p>' : '') +
         (item.description ? '<p>"' + escapeHtml(item.description) + '"</p>' : '') +
         '<p>Wants database opt-in: ' + escapeHtml(item.joinDatabase === 'yes' ? 'Yes' : 'No') + '</p>' +
         '<div class="pending-actions">' +
