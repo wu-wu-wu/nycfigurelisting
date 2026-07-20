@@ -111,6 +111,9 @@
   }
   .card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: #ddd; }
   .card-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .card { cursor: pointer; transition: box-shadow 0.15s ease, transform 0.15s ease; }
+  .card:hover { box-shadow: 0 4px 14px rgba(13,12,10,0.12); transform: translateY(-2px); }
+  .card-more-hint { font-size: 0.75rem; color: var(--muted); text-decoration: underline; margin-top: 2px; }
   .card-date { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.03em; }
   .card-title { font-size: 1.15rem; line-height: 1.25; margin: 2px 0 2px; }
   .card-venue { font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
@@ -211,6 +214,30 @@
     background: #fff3cd; border: 1px solid #e0c26a; color: #6b5200; font-size: 0.85rem;
     padding: 10px 16px; text-align: center;
   }
+
+  /* ---- event details modal ---- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(13,12,10,0.72); z-index: 100;
+    display: none; align-items: flex-start; justify-content: center;
+    padding: 5vh 16px; overflow-y: auto;
+  }
+  .modal-card {
+    background: var(--card-bg); border-radius: var(--radius); max-width: 560px; width: 100%;
+    position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  }
+  .modal-close {
+    position: absolute; top: 10px; right: 10px; background: var(--black); color: #fff;
+    width: 32px; height: 32px; border-radius: 50%; font-size: 1.1rem; line-height: 1;
+    display: flex; align-items: center; justify-content: center; z-index: 2;
+  }
+  .modal-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #ddd; border-radius: var(--radius) var(--radius) 0 0; }
+  .modal-body { padding: 22px 26px 26px; display: flex; flex-direction: column; gap: 8px; }
+  .modal-date { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.03em; color: var(--red); }
+  .modal-title { font-size: 1.7rem; line-height: 1.2; }
+  .modal-venue { font-size: 0.95rem; color: var(--muted); }
+  .modal-desc { font-size: 0.92rem; line-height: 1.5; color: var(--ink); margin: 6px 0; white-space: pre-wrap; }
+  .modal-meta { font-size: 0.9rem; font-weight: 600; }
+  .modal-ticket { margin-top: 10px; text-align: center; }
 </style>
 </head>
 <body>
@@ -381,6 +408,13 @@
   </footer>
 </div>
 
+<div class="modal-overlay" id="event-modal-overlay">
+  <div class="modal-card" id="event-modal-card">
+    <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
 <div id="admin-view" style="display:none;">
   <header class="site">
     <div class="logo">NYC Figure Listing — Admin</div>
@@ -403,7 +437,7 @@
    CONFIG — paste your deployed Apps Script Web App URL here.
    It looks like: https://script.google.com/macros/s/AKfycb.../exec
    ========================================================= */
-const API_URL = "https://script.google.com/macros/s/AKfycbyCOyvkPEK9OHb1d-4NoTdu4kRTkIhhCtoweJCOSM-JsqgZ_ohft_TDGp2iX-H3r8J1/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbx9MVcTHlh0_tNOe0SO291VV5Hor0p3JUagk5PJIBvd2_0b8Y2P6POjEY3zVeugn1Ic/exec";
 
 /* Optional: photos of your own models/events for the oval frames
    flanking "Events" in the hero. Leave blank to keep the gradient
@@ -704,6 +738,13 @@ function fmtDateTime(dateStr, startTime) {
   return dayPart + (timePart ? ' · ' + timePart : '');
 }
 
+function fmtTimeOnly(timeStr) {
+  if (!timeStr) return '';
+  const d = new Date('2000-01-01T' + String(timeStr).trim());
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
 function renderCards() {
   let filtered = allEvents.slice();
   
@@ -772,12 +813,13 @@ function renderCards() {
         '<h3 class="card-title">' + escapeHtml(e.eventName) + '</h3>' +
         '<div class="card-venue">' + escapeHtml(e.venue || '') + (e.neighborhood ? ' · ' + escapeHtml(e.neighborhood) : '') + '</div>' +
         tagsHtml +
-        (e.description ? '<div class="card-desc">' + escapeHtml(e.description) + '</div>' : '') +
+        (e.description ? '<div class="card-more-hint">View details</div>' : '') +
         '<div class="card-actions">' +
-          '<a class="btn-ticket" href="' + (e.ticketLink || '#') + '" target="_blank" rel="noopener">Tickets</a>' +
+          '<a class="btn-ticket" href="' + (e.ticketLink || '#') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Tickets</a>' +
           '<span class="more-details">$' + escapeHtml(String(e.cost || '')) + (e.materialsIncluded === 'yes' ? ' · materials incl.' : '') + '</span>' +
         '</div>' +
       '</div>';
+    card.setAttribute('data-event-id', e.id);
     grid.appendChild(card);
   });
 
@@ -883,6 +925,57 @@ document.getElementById('submit-form').addEventListener('submit', async function
   } finally {
     btn.disabled = false; btn.textContent = 'SUBMIT';
   }
+});
+
+// ---------- event details modal ----------
+
+function openEventModal(e) {
+  const modelingTags = (e.modelingType || '').split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+  const isRecurring = e.isRecurring === 'yes' || e.isRecurring === true;
+  const tagsHtml = (modelingTags.length || isRecurring)
+    ? '<div class="card-tags">' +
+        modelingTags.map(function (t) { return '<span class="card-tag">' + escapeHtml(t) + '</span>'; }).join('') +
+        (isRecurring ? '<span class="card-tag recurring">Recurring' + (e.recurrenceFrequency ? ' · ' + escapeHtml(e.recurrenceFrequency) : '') + (e.recurrenceEndDate ? ' until ' + escapeHtml(e.recurrenceEndDate) : '') + '</span>' : '') +
+      '</div>'
+    : '';
+
+  const timeRange = fmtDateTime(e.eventDate, e.startTime) + (e.endTime ? ' – ' + fmtTimeOnly(e.endTime) : '');
+
+  document.getElementById('modal-content').innerHTML =
+    (e.imageUrl ? '<img class="modal-img" src="' + e.imageUrl + '" onerror="this.style.display=\'none\'" alt="">' : '') +
+    '<div class="modal-body">' +
+      '<div class="modal-date">' + timeRange + '</div>' +
+      '<h2 class="modal-title">' + escapeHtml(e.eventName) + '</h2>' +
+      '<div class="modal-venue">' + escapeHtml(e.venue || '') + (e.neighborhood ? ' · ' + escapeHtml(e.neighborhood) : '') + '</div>' +
+      tagsHtml +
+      (e.description ? '<p class="modal-desc">' + escapeHtml(e.description) + '</p>' : '') +
+      '<div class="modal-meta">$' + escapeHtml(String(e.cost || '')) + (e.materialsIncluded === 'yes' ? ' · materials included' : '') + '</div>' +
+      '<a class="btn-ticket modal-ticket" href="' + (e.ticketLink || '#') + '" target="_blank" rel="noopener">Get tickets</a>' +
+    '</div>';
+
+  document.getElementById('event-modal-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEventModal() {
+  document.getElementById('event-modal-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+document.getElementById('card-grid').addEventListener('click', function (ev) {
+  const card = ev.target.closest('.card');
+  if (!card) return;
+  const id = card.getAttribute('data-event-id');
+  const match = allEvents.find(function (e) { return String(e.id) === String(id); });
+  if (match) openEventModal(match);
+});
+
+document.getElementById('modal-close-btn').addEventListener('click', closeEventModal);
+document.getElementById('event-modal-overlay').addEventListener('click', function (ev) {
+  if (ev.target.id === 'event-modal-overlay') closeEventModal();
+});
+document.addEventListener('keydown', function (ev) {
+  if (ev.key === 'Escape') closeEventModal();
 });
 
 // ---------- pagination ----------
